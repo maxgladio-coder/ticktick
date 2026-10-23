@@ -10,6 +10,12 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import com.maxgladio.ticktick.core.MetronomeConfig
 import com.maxgladio.ticktick.core.PlaybackState
 import com.maxgladio.ticktick.core.TapTempoEstimator
+import com.maxgladio.ticktick.update.AppRelease
+import com.maxgladio.ticktick.update.UpdateState
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.Modifier
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -45,6 +51,7 @@ class ScreenRenderTest {
         assertEquals(93, config.bpm)
         compose.onNodeWithContentDescription("声音与反馈设置").performScrollTo().performClick()
         compose.onNodeWithText("首拍重音").assertIsDisplayed()
+        compose.onNodeWithText("检查更新").performScrollTo().assertIsDisplayed()
     }
 
     @Test
@@ -66,6 +73,35 @@ class ScreenRenderTest {
         compose.runOnIdle { assertEquals(1, taps) }
         compose.onNodeWithContentDescription("敲击测速，跟随节奏连续敲击至少四次").performScrollTo().assertIsDisplayed()
         screenshot("small-phone")
+    }
+
+    @Test fun updateStatesAndDownloadRequireExplicitActions() {
+        var state by mutableStateOf<UpdateState>(UpdateState.Idle)
+        var checks = 0
+        var opened = ""
+        val apk = "https://github.com/maxgladio-coder/ticktick/releases/download/v1.2.0/ticktick.apk"
+        compose.setContent {
+            TickTickTheme {
+                Column(Modifier.verticalScroll(rememberScrollState())) {
+                    UpdateCard(state, { checks++; state = UpdateState.Checking }, { opened = it })
+                }
+            }
+        }
+        assertEquals(0, checks)
+        compose.onNodeWithText("检查更新").performClick()
+        compose.onNodeWithText("正在检查更新…").assertIsDisplayed()
+        compose.onNodeWithText("重新检查").assertIsNotEnabled()
+        compose.runOnIdle { state = UpdateState.Available(AppRelease("v1.2.0", "改善敲击测速稳定性", "https://github.com/maxgladio-coder/ticktick/releases/tag/v1.2.0", apk)) }
+        compose.onNodeWithText("发现新版本 v1.2.0").assertIsDisplayed()
+        assertEquals("", opened)
+        screenshot("update-available")
+        compose.onNodeWithText("下载新版 APK").performClick()
+        assertEquals(apk, opened)
+        compose.runOnIdle { state = UpdateState.Error("连接 GitHub 失败，请检查网络后重试。") }
+        compose.onNodeWithText("重新检查").performClick()
+        assertEquals(2, checks)
+        compose.runOnIdle { state = UpdateState.Current }
+        compose.onNodeWithText("已是最新版本").assertIsDisplayed()
     }
 
     private fun screenshot(name: String) {

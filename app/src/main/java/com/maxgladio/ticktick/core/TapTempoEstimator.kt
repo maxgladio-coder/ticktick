@@ -97,6 +97,7 @@ class TapTempoEstimator {
     companion object {
         const val WINDOW_MS = 12_000L
         const val RESET_GAP_MS = 4_000L
-        const val MAX_INTERVALS = 24
+        const val MAX_TAPS = 40
+        const val MAX_INTERVALS = MAX_TAPS - 1
     }
 }

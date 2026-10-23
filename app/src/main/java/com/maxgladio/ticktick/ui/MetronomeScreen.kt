@@ -45,6 +45,7 @@ import com.maxgladio.ticktick.core.ClickSound
 import com.maxgladio.ticktick.core.MetronomeConfig
 import com.maxgladio.ticktick.core.PlaybackState
 import com.maxgladio.ticktick.core.TapTempoEstimator
+import com.maxgladio.ticktick.update.UpdateState
 import kotlinx.coroutines.delay
 import kotlin.math.PI
 import kotlin.math.cos
@@ -61,6 +62,9 @@ fun MetronomeScreen(
     onToggle: () -> Unit,
     onTap: () -> Unit,
     onResetTap: () -> Unit,
+    updateState: UpdateState = UpdateState.Idle,
+    onCheckUpdate: () -> Unit = {},
+    onOpenUpdate: (String) -> Unit = {},
 ) {
     var settings by rememberSaveable { mutableStateOf(false) }
     var editTempo by rememberSaveable { mutableStateOf(false) }
@@ -180,7 +184,7 @@ fun MetronomeScreen(
     if (editTempo) TempoDialog(config.bpm, onDismiss = { editTempo = false }) {
         onConfig(config.copy(bpm = it)); editTempo = false
     }
-    if (settings) SettingsSheet(config, onConfig) { settings = false }
+    if (settings) SettingsSheet(config, onConfig, updateState, onCheckUpdate, onOpenUpdate) { settings = false }
     if (meter) MeterDialog(config, onConfig) { meter = false }
     if (subdivision) AlertDialog(
         onDismissRequest = { subdivision = false }, title = { Text("细分节拍") },
@@ -399,8 +403,10 @@ private fun MeterDialog(config: MetronomeConfig, onConfig: (MetronomeConfig) -> 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SettingsSheet(config: MetronomeConfig, onConfig: (MetronomeConfig) -> Unit, onDismiss: () -> Unit) {
-    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = Paper) {
+private fun SettingsSheet(config: MetronomeConfig, onConfig: (MetronomeConfig) -> Unit,
+    updateState: UpdateState, onCheckUpdate: () -> Unit, onOpenUpdate: (String) -> Unit, onDismiss: () -> Unit) {
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = Paper,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp).padding(bottom = 28.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text("声音与反馈", fontSize = 23.sp, fontWeight = FontWeight.Bold)
@@ -422,8 +428,10 @@ private fun SettingsSheet(config: MetronomeConfig, onConfig: (MetronomeConfig) -
             Text("手机音量键可调节媒体音量。播放时支持锁屏和后台运行，通知栏可停止。", fontSize = 12.sp, color = Muted)
             HorizontalDivider(color = Line)
             Text("关于敲击测速", fontWeight = FontWeight.SemiBold)
-            Text("每次敲击都用最近 12 秒内最多 24 个间隔重新测速，旧数据自动移出，持续敲击不会停止。建议先敲击 8–12 次；稳定度表示敲击一致性。停顿超过 4 秒后，再次敲击会重新计算。",
+            Text("每次敲击都用最近 12 秒内最多 40 次敲击（39 个间隔）重新测速，旧数据自动移出，持续敲击不会停止。建议先敲击 8–12 次；稳定度表示敲击一致性。停顿超过 4 秒后，再次敲击会重新计算。",
                 fontSize = 12.sp, lineHeight = 20.sp, color = Muted)
+            HorizontalDivider(color = Line)
+            UpdateCard(updateState, onCheckUpdate, onOpenUpdate)
             TextButton(onClick = onDismiss, modifier = Modifier.align(Alignment.End)) { Text("完成") }
         }
     }

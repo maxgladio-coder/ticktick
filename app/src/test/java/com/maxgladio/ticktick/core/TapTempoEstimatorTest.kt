@@ -43,6 +43,20 @@ class TapTempoEstimatorTest {
         assertEquals(3, result.intervals)
     }
 
+    @Test fun highTempoKeepsFortyTapsAndConvergesDuringContinuousJitter() {
+        for (bpm in listOf(240, 280)) {
+            val estimator = TapTempoEstimator()
+            repeat(400) { index ->
+                val jitter = listOf(-8, 5, -3, 8, -5, 3)[index % 6]
+                val result = estimator.tap((index * 60_000.0 / bpm + jitter).toLong())
+                if (index >= 39) {
+                    assertEquals(39, result.intervals)
+                    assertEquals(bpm.toDouble(), result.bpm!!, 1.5)
+                }
+            }
+        }
+    }
+
     @Test fun isolatedMissedBeatDoesNotHalveTempo() {
         val result = taps(500, 500, 500, 500, 1000, 500, 500, 500)
         assertEquals(120.0, result.bpm!!, 0.01)
@@ -64,7 +78,7 @@ class TapTempoEstimatorTest {
         var now = 0L
         estimator.tap(now)
         repeat(16) { now += 500; estimator.tap(now) }
-        repeat(24) { now += 460; estimator.tap(now) }
+        repeat(40) { now += 460; estimator.tap(now) }
         assertEquals(60_000.0 / 460, estimator.estimate.bpm!!, 0.1)
     }
 
@@ -101,7 +115,8 @@ class TapTempoEstimatorTest {
     @Test fun historyIsBoundedByCountAndTime() {
         val estimator = TapTempoEstimator()
         repeat(100) { estimator.tap(it * 250L) }
-        assertEquals(24, estimator.estimate.intervals)
+        assertEquals(39, estimator.estimate.intervals)
+        assertEquals(40, estimator.estimate.intervals + 1)
         estimator.reset()
         repeat(100) { estimator.tap(it * 2000L) }
         assertTrue(estimator.estimate.intervals <= 7)
