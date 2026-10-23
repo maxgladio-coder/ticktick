@@ -28,6 +28,9 @@ try {
     $env:JAVA_TOOL_OPTIONS = "$($previousValues['JAVA_TOOL_OPTIONS']) `"-Djdk.net.unixdomain.tmpdir=$socketDirectory`" `"-Djava.io.tmpdir=$socketDirectory`""
     & .\gradlew.bat @Tasks --no-daemon --console=plain
     $buildExitCode = $LASTEXITCODE
+    if ($buildExitCode -eq 0 -and ($Tasks -contains ':app:assembleDebug' -or $Tasks -contains 'assembleDebug')) {
+        & (Join-Path $PSScriptRoot 'package-apk.ps1')
+    }
 } finally {
     Pop-Location
     foreach ($name in $previousValues.Keys) {

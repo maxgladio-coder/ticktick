@@ -26,7 +26,7 @@ $env:JAVA_HOME = '你的 JDK 路径'
 
 在 `local.properties` 设置你的 `sdk.dir`，或设置 `ANDROID_HOME`。`local.properties` 与本机下载工具均已加入 `.gitignore`。
 
-APK 输出：`app/build/outputs/apk/debug/app-debug.apk`。
+Gradle 原始 APK 输出：`app/build/outputs/apk/debug/app-debug.apk`。本机构建脚本同时生成带版本号的发布安装包：`app/build/outputs/publish/ticktick-<versionName>.apk`；也可在构建后运行 `scripts/package-apk.ps1` 生成。GitHub Release 上传带版本号的安装包。
 
 GitHub 更新的发布步骤、版本标签和签名要求见 [发布说明](docs/RELEASING.md)。
 
