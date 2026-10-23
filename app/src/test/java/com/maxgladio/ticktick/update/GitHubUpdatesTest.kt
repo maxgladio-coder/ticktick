@@ -30,10 +30,12 @@ class GitHubUpdatesTest {
         assertEquals("v1.10.0", state.release.tag)
         assertEquals("更新说明", state.release.notes)
         assertTrue(state.release.apkUrl!!.endsWith("ticktick.apk"))
+        assertEquals("v1.1.1", (check(release("v1.1.1"), "1.1.0") as UpdateState.Available).release.tag)
     }
     @Test fun equalOrOlderReleaseNeverOffersDowngrade() {
         assertEquals(UpdateState.Current, check(release(), "1.10.0"))
         assertEquals(UpdateState.Current, check(release(), "2.0.0"))
+        assertEquals(UpdateState.Current, check(release("v1.1.1"), "1.1.1"))
     }
     @Test fun missingOrUnsafeApkFallsBackToReleasePage() {
         val noAssets = release().replace(Regex("\"assets\":\\[.*]"), "\"assets\":[]")

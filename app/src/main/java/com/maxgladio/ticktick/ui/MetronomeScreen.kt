@@ -338,7 +338,7 @@ private fun TapCard(estimate: TapTempoEstimator.Estimate, lastTap: Long, onTap: 
             if (estimate.recentBpm.isNotEmpty()) {
                 TapHistory(estimate)
             }
-            Text("持续敲击，滚动计算最近 12 秒的速度", fontSize = 10.sp, color = Muted)
+            Text("持续敲击，用最近最多 40 次敲击测速", fontSize = 10.sp, color = Muted)
         }
     }
 }
@@ -428,7 +428,7 @@ private fun SettingsSheet(config: MetronomeConfig, onConfig: (MetronomeConfig) -
             Text("手机音量键可调节媒体音量。播放时支持锁屏和后台运行，通知栏可停止。", fontSize = 12.sp, color = Muted)
             HorizontalDivider(color = Line)
             Text("关于敲击测速", fontWeight = FontWeight.SemiBold)
-            Text("每次敲击都用最近 12 秒内最多 40 次敲击（39 个间隔）重新测速，旧数据自动移出，持续敲击不会停止。建议先敲击 8–12 次；稳定度表示敲击一致性。停顿超过 4 秒后，再次敲击会重新计算。",
+            Text("每次敲击都用最近最多 40 次敲击（39 个间隔）重新测速，不限制这段历史的总时长。达到 40 次后，最旧的数据自动移出，持续敲击不会停止。建议先敲击 8–12 次；稳定度表示敲击一致性。停顿超过 4 秒或识别到明显变速时会重新建立测速窗口。",
                 fontSize = 12.sp, lineHeight = 20.sp, color = Muted)
             HorizontalDivider(color = Line)
             UpdateCard(updateState, onCheckUpdate, onOpenUpdate)

@@ -112,15 +112,17 @@ class TapTempoEstimatorTest {
         assertNull(estimator.estimate.bpm)
     }
 
-    @Test fun historyIsBoundedByCountAndTime() {
-        val estimator = TapTempoEstimator()
-        repeat(100) { estimator.tap(it * 250L) }
-        assertEquals(39, estimator.estimate.intervals)
-        assertEquals(40, estimator.estimate.intervals + 1)
-        estimator.reset()
-        repeat(100) { estimator.tap(it * 2000L) }
-        assertTrue(estimator.estimate.intervals <= 7)
-        assertEquals(30.0, estimator.estimate.bpm!!, 0.01)
+    @Test fun historyKeepsFortyTapsRegardlessOfElapsedTime() {
+        for (period in listOf(2000L, 1000L, 500L, 250L, 200L)) {
+            val estimator = TapTempoEstimator()
+            repeat(100) { index ->
+                val result = estimator.tap(index * period)
+                assertEquals(minOf(index, 39), result.intervals)
+                if (index >= 3) assertEquals(60_000.0 / period, result.bpm!!, 0.01)
+            }
+            // At 30 BPM these 40 taps span 78 seconds, rather than a 12-second window.
+            assertEquals(40, estimator.estimate.intervals + 1)
+        }
     }
 
     @Test fun irregularTappingHasLowerStability() {

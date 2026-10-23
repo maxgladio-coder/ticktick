@@ -39,7 +39,7 @@ class TapTempoEstimator {
         if (interval < 150.0) return estimate
         lastTap = nowMs
         history.addLast(Interval(nowMs, interval))
-        while (history.size > MAX_INTERVALS || (history.isNotEmpty() && nowMs - history.first().end > WINDOW_MS)) {
+        while (history.size > MAX_INTERVALS) {
             history.removeFirst()
         }
 
@@ -73,7 +73,10 @@ class TapTempoEstimator {
             exp(-(nowMs - sample.end) / 7000.0) * robust
         }
         val totalWeight = weights.sum()
-        val period = if (totalWeight > 0) corrected.indices.sumOf { corrected[it].ms * weights[it] } / totalWeight else center
+        // Center the weighted sum so an exact boundary tempo (30/300 BPM) stays exact.
+        val period = if (totalWeight > 0) center + corrected.indices.sumOf {
+            (corrected[it].ms - center) * weights[it]
+        } / totalWeight else center
         val count = weights.count { it > 0.1 }
         val rawBpm = 60_000.0 / period
         val bpm = rawBpm.takeIf { count >= 3 && it in 30.0..300.0 }
@@ -95,7 +98,6 @@ class TapTempoEstimator {
     }
 
     companion object {
-        const val WINDOW_MS = 12_000L
         const val RESET_GAP_MS = 4_000L
         const val MAX_TAPS = 40
         const val MAX_INTERVALS = MAX_TAPS - 1
